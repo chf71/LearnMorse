@@ -1,0 +1,59 @@
+﻿@page "/lessons/{LessonId:int}"
+@inherits LessonBase
+
+<h3>@LessonDeck.Name</h3>
+
+@{
+    if (LessonDeck == null)
+    {
+        <p>Uh... this lesson doesnt exist</p>
+    }
+    else
+    {
+        <div class="card m-3 mx-auto" style="border: none;">
+            <div class="card-header text-center">
+                @QuestionIndex / @LessonDeck.Questions.Count
+            </div>
+            <img id="card" class="card-img-top mx-auto" style="width:15%; height:30%;" src=""
+                 onclick="() => { TransitionNext('Intro'); }" />
+            <div id="answerbox" class="card-footer text-center" style="border: none; background-color: initial;">
+                @{
+                    if (CurrentQuestion != null)
+                    {
+                        if (CurrentQuestion.Type == Models.QType.CharMC || CurrentQuestion.Type == Models.QType.MorseMC)
+                        {
+                            <div id="answer0" class="btn btn-primary m-1" onclick="CheckMCAnswer(0)">
+                                @CurrentQuestion.GetAnswers()[0].ToUpper()
+                            </div>
+                            <div id="answer1" class="btn btn-primary m-1" onclick="CheckMCAnswer(1)">
+                                @CurrentQuestion.GetAnswers()[1].ToUpper()
+                            </div>
+                            <div id="answer2" class="btn btn-primary m-1" onclick="CheckMCAnswer(2)">
+                                @CurrentQuestion.GetAnswers()[2].ToUpper()
+                            </div>
+                        }
+                        else if (CurrentQuestion.Type == Models.QType.MorseInput)
+                        {
+                            <div id="morseinput" class="mx-auto text-center morse-input" style="width: 300px; height: 125px; background-color: #1b6ec2;"
+                                 onmousedown="InputMouseDown()" onmouseup="InputMouseUp()">
+                                Tap to input Morse
+                            </div>
+
+                            <br />
+
+                            <div class="card-footer text-center" style="border: none; background-color: initial;">
+                                <div class="btn btn-primary m-1" onclick="TransitionNext('Input')">Skip</div>
+                                <div class="btn btn-primary m-1" onclick="ResetInputBox()">Reset</div>
+                            </div>
+                        }
+
+                        <br />
+
+                        <audio id="clip" controls autoplay src="@CurrentQuestion.Card.Clip" typeof="audio/mp3"></audio>
+                    }
+                }
+
+            </div>
+        </div>
+    }
+}

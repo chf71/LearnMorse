@@ -1,0 +1,20 @@
+﻿@page "/lessons"
+@inherits UnitLessonsBase
+
+<h2>Lessons</h2>
+
+<div class="card-deck">
+    @foreach (var unit in Units)
+    {
+        <div class="card m-3">
+            <div class="card-img-top text-center">
+                <h1>@unit.Name</h1>
+            </div>
+            <div class="card-footer text-center">
+                <a href="@unit.Route" class="btn btn-primary m-1">Start</a>
+            </div>
+        </div>
+    }
+</div>
+
+
