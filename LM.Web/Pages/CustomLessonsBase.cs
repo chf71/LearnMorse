@@ -46,7 +46,7 @@ namespace LM.Web.Pages
         {
             connection.Open();
 
-            SqlCommand sqlcmd = new SqlCommand(@"select CustomLessons from dbo.AspNetUsers where UserName = @UserName", connection);
+            SqlCommand sqlcmd = new SqlCommand(@"select CustomLessons from dbo.AspNetUsers where UserName = @UserName and CustomLessons is not null", connection);
             sqlcmd.Parameters.AddWithValue("@UserName", UserName);
             SqlDataReader rdr = sqlcmd.ExecuteReader();
 
@@ -123,7 +123,7 @@ namespace LM.Web.Pages
             }
         }
 
-        public async void CreateDeck()
+        public void CreateDeck()
         {
             int newId = 1;
             if (UserDecks.Count > 0) newId = UserDecks[UserDecks.Count - 1].Id + 1;
@@ -136,8 +136,6 @@ namespace LM.Web.Pages
             Deck deck = new Deck(newId, DeckName, CustomDeck, false);
 
             UserDecks.Add(deck);
-
-            await JSR.InvokeVoidAsync("HideDeckBuilder");
 
             RemoveAllFromDeck();
             DeckName = string.Empty;

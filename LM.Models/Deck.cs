@@ -23,6 +23,9 @@ namespace LM.Models
         [XmlElement]
         public int Progress { get; set; }
 
+        [XmlElement]
+        public bool Finished { get; set; }
+
         public Deck() { }
 
         public Deck(int id, string name, List<string> cardNames, bool practiceLesson)
@@ -65,7 +68,25 @@ namespace LM.Models
 
         public static Deck DeckFromSet(int id)
         {
-            return new Deck(0, "", CardDB.CardsFromSet(id), false);
+            switch (id)
+            {
+                case 1:
+                    return new Deck(0, "Unit 1: A-E", CardDB.CardsFromSet(id), false);
+                case 2:
+                    return new Deck(0, "Unit 2: F-J", CardDB.CardsFromSet(id), false);
+                case 3:
+                    return new Deck(0, "Unit 3: K-O", CardDB.CardsFromSet(id), false);
+                case 4:
+                    return new Deck(0, "Unit 4: P-T", CardDB.CardsFromSet(id), false);
+                case 5:
+                    return new Deck(0, "Unit 5: U-Z", CardDB.CardsFromSet(id), false);
+                case 6:
+                    return new Deck(0, "Unit 6: 0-4", CardDB.CardsFromSet(id), false);
+                case 7:
+                    return new Deck(0, "Unit 7: 5-9", CardDB.CardsFromSet(id), false);
+                default:
+                    return null;
+            }
         }
 
         public void ShuffleDeck()

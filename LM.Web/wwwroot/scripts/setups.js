@@ -16,8 +16,6 @@ SetupIntroQuestion = function (cardFaceImg, cardBackImg) {
 	$("#card").attr("src", cardFaceImg);
 	$("#card").click(() => { TransitionNext('Intro'); });
 
-	console.log(cardFaceImg);
-
 	TransitionIn();
 }
 
@@ -46,7 +44,10 @@ SetupInputQuestion = function (morseText, cardFaceImg, cardBackImg) {
 
 	$("#card").attr("src", cardFaceImg);
 
+	context = new AudioContext();
 	osci = context.createOscillator();
+	gainNode = context.createGain();
+	gainNode.connect(context.destination);
 	osci.type = "sine";
 	osci.frequency.value = 750;
 	osci.connect(gainNode);
@@ -87,10 +88,10 @@ InputMouseUp = function () {
 	InputTime = InputEndTime - InputStartTime;
 
 	// decide if it's a dit or dah
-	if (InputTime >= 500) {
+	if (InputTime >= 300) {
 		MorseInputText = MorseInputText.concat("_ ");
 	}
-	else if (InputTime >= 100 && InputTime < 500) {
+	else if (InputTime >= 50 && InputTime < 300) {
 		MorseInputText = MorseInputText.concat(". ");
 	}
 

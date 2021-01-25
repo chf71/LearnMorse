@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace LM.Web.Pages
 {
+    public enum LessonType { StandardLesson, CustomLesson, StandardPractice, CustomPractice };
+
     public class LessonBase : ComponentBase
     {
         private SqlConnection Connection = new SqlConnection("Server=(localdb)\\mssqllocaldb;Database=LM.Web;Trusted_Connection=True;MultipleActiveResultSets=true");
@@ -27,14 +29,9 @@ namespace LM.Web.Pages
         public string LessonName { get; set; }
         public Deck LessonDeck { get; set; }
         public Question CurrentQuestion { get; set; }
-        public int QuestionIndex { get; set; }
 
         private List<Deck> UserDecks { get; set; }
-        
-        private enum LessonType { StandardLesson, CustomLesson, StandardPractice, CustomPractice };
-
         private LessonType Type { get; set; }
-
         private string UserName { get; set; }
 
         [Inject]
@@ -70,12 +67,21 @@ namespace LM.Web.Pages
             LoadLessonDeck();
 
             queryStrings.TryGetValue("reset", out var reset);
-            if (reset.Equals("true")) LessonDeck.Progress = 0;
+            if (reset.Equals("true"))
+            {
+                LessonDeck.Progress = 0;
+                SaveLessonDeck();
+            }
 
             NextQuestionAction = NextQuestion;
             UpdateStateAction = UpdateState;
 
             base.OnInitialized();
+        }
+
+        private void UpdateState()
+        {
+            StateHasChanged();
         }
 
         private void GetLessonType(Dictionary<string, Microsoft.Extensions.Primitives.StringValues> queryStrings)
@@ -116,12 +122,21 @@ namespace LM.Web.Pages
             if (firstRender)
             {
                 NextQuestion(false);
+                // this isn't working
+                JSR.InvokeVoidAsync("SetClipVolume");
             }
+
             return base.OnAfterRenderAsync(firstRender);
         }
 
         private void LoadLessonDeck()
         {
+            if (Type == LessonType.StandardPractice)
+            {
+                LessonDeck = new Deck(0, "", CardDB.CardsFromSet(LessonId), true);
+                return;
+            }
+
             Connection.Open();
 
             SqlCommand sqlcmd = null;
@@ -131,6 +146,7 @@ namespace LM.Web.Pages
                     sqlcmd = new SqlCommand(@"select UnitLessons from dbo.AspNetUsers where UserName = @UserName", Connection);
                     break;
                 case LessonType.CustomLesson:
+                case LessonType.CustomPractice:
                     sqlcmd = new SqlCommand(@"select CustomLessons from dbo.AspNetUsers where UserName = @UserName", Connection);
                     break;
             }
@@ -150,6 +166,7 @@ namespace LM.Web.Pages
                     LessonDeck = UserDecks[LessonId - 1];
                     break;
                 case LessonType.CustomLesson:
+                case LessonType.CustomPractice:
                     foreach (Deck deck in UserDecks)
                     {
                         if (deck.Id == LessonId)
@@ -159,6 +176,11 @@ namespace LM.Web.Pages
                         }
                     }
                     break;
+            }
+
+            if (Type == LessonType.CustomPractice)
+            {
+                LessonDeck = new Deck(0, "", LessonDeck.Cards, true);
             }
 
             rdr.Close();
@@ -196,27 +218,21 @@ namespace LM.Web.Pages
             Connection.Close();
         }
 
-        public void UpdateState()
-        {
-            StateHasChanged();
-        }
-
         public async void NextQuestion(bool calledNext)
         {
             if (calledNext)
             {
                 if (Type == LessonType.StandardLesson || Type == LessonType.CustomLesson)
                 {
-                    LessonDeck.Progress++;
                     SaveLessonDeck();
                 }
+
+                LessonDeck.Progress++;
             }
 
-            QuestionIndex = LessonDeck.Progress;
-
-            if (QuestionIndex < LessonDeck.Questions.Count)
+            if (LessonDeck.Progress < LessonDeck.Questions.Count)
             {
-                CurrentQuestion = LessonDeck.Questions[QuestionIndex];
+                CurrentQuestion = LessonDeck.Questions[LessonDeck.Progress];
 
                 switch (CurrentQuestion.Type)
                 {
@@ -234,7 +250,7 @@ namespace LM.Web.Pages
             }
             else
             {
-                // reroute to page we came from
+                LessonDeck.Finished = true;
             }
         }
     }

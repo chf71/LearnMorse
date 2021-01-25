@@ -1,27 +1,63 @@
 ﻿@page "/custom"
 @inherits CustomLessonsBase
+@using Microsoft.AspNetCore.WebUtilities
 
-<h3>Your custom decks</h3>
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#lessonBuilder">
+    New lesson
+</button>
 
 @{
     if (UserDecks.Count == 0)
     {
-        <p>You have no decks.  You should make one maybe</p>
+        <p class="d-flex justify-content-center">You have no decks.  You should make one maybe</p>
     }
     else
     {
-        <div class="card-deck">
+        <div class="d-flex flex-row flex-wrap justify-content-around">
             @{
                 int j = 0;
                 foreach (LM.Models.Deck deck in UserDecks)
                 {
-                    <div class="card m-3">
+                    <div class="card m-3" style="max-width: 230px; min-width: 230px;">
+                        <div class="card-header">
+                            @deck.Name
+                            <button type="button" class="close" aria-label="Delete" @onclick="() => { DeleteDeck(j++); }">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
                         <div class="card-img-top text-center">
-                            <h1>@deck.Name</h1>
+                            <img class="card-img" src="/images/deck.png" style="max-width: 175px; max-height: 200px;" />
                         </div>
                         <div class="card-footer text-center">
-                            <a href="/lessons/@deck.Id?custom=true" class="btn btn-primary m-1">Start</a>
-                            <div class="btn btn-primary m-1" @onclick="() => { DeleteDeck(j++); }">Delete</div>
+                            @{
+                                var continueArgs = new Dictionary<string, string>
+                                {
+                                    { "type", "customLesson" },
+                                };
+
+                                if (deck.Progress > 0)
+                                {
+                                    <a href="@QueryHelpers.AddQueryString("/lessons/" + deck.Id, continueArgs)" class="btn btn-primary m-1">Continue</a>
+
+                                    var restartArgs = new Dictionary<string, string>
+                                    {
+                                        { "type", "customLesson" },
+                                        { "reset", "true" },
+                                    };
+                                    <a href="@QueryHelpers.AddQueryString("/lessons/" + deck.Id, restartArgs)" class="btn btn-primary m-1">Restart</a>
+                                }
+                                else
+                                {
+                                    <a href="@QueryHelpers.AddQueryString("/lessons/" + deck.Id, continueArgs)" class="btn btn-primary m-1">Start</a>
+                                }
+
+                                var practiceArgs = new Dictionary<string, string>
+                                {
+                                    { "type", "customPractice" },
+                                };
+                                <br />
+                                <a href="@QueryHelpers.AddQueryString("/lessons/" + deck.Id, practiceArgs)" class="btn btn-primary m-1">Practice</a>
+                            }
                         </div>
                     </div>
                 }
@@ -29,10 +65,6 @@
         </div>
     }
 }
-
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#lessonBuilder">
-    New lesson
-</button>
 
 <div class="modal" id="lessonBuilder" tabindex="-1" role="dialog" aria-labelledby="lessonBuilderLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">

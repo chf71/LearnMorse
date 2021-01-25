@@ -11,14 +11,6 @@ ResetInputBox = function () {
 	$("#morseinput").html("");
 }
 
-ShowDeckBuilder = function () {
-	$("#deckbuilderbox").removeClass("invisible");
-}
-
-HideDeckBuilder = function () {
-	$("#deckbuilderbox").addClass("invisible");
-}
-
 CheckGuestCookie = function () {
 	return GetGuestCookieValue() == "";
 }
@@ -35,4 +27,9 @@ GetGuestCookieValue = function () {
 
 SetGuestCookie = function (keyValue) {
 	document.cookie = "guestCookie = " + keyValue;
+}
+
+SetClipVolume = function () {
+	$("#clip")[0].volume = .5;
+	console.log("set volume");
 }

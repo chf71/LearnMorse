@@ -14,12 +14,14 @@ TransitionNext = function (type) {
 	$("#card").transition({
 		rotateY: "90deg",
 		duration: 250,
+		start: () => {
+			PlayClip();
+        },
 		complete: () => {
 			$("#card").transition({
 				rotateY: "0deg",
 				duration: 500,
 				start: () => {
-					PlayClip();
 					$("#card").attr("src", CardBackImg);
 				},
 				complete: () => {
