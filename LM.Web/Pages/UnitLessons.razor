@@ -1,19 +1,52 @@
 ﻿@page "/lessons"
 @inherits UnitLessonsBase
+@using Microsoft.AspNetCore.WebUtilities
 
 <h2>Lessons</h2>
 
-<div class="card-deck">
-    @foreach (var unit in Units)
-    {
-        <div class="card m-3">
-            <div class="card-img-top text-center">
-                <h1>@unit.Name</h1>
+<div class="d-flex flex-row flex-wrap">
+    @{
+        int i = 1;
+        foreach (var unit in UnitDecks)
+        {
+            int up = unit.Progress;
+            double upp = (unit.Progress / unit.Questions.Count) * 100;
+            <div class="card m-3">
+                <div class="card-header">
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: @(upp)%" aria-valuenow="@(upp)" aria-valuemin="0" aria-valuemax="100">@up / @unit.Questions.Count </div>
+                    </div>
+                </div>
+                <div class="card-img-top text-center">
+                    <h1>@unit.Name</h1>
+                </div>
+                <div class="card-footer text-center">
+                    @{
+                        var continueArgs = new Dictionary<string, string>()
+                        {
+                            { "type", "standardLesson" },
+                        };
+
+                        if (unit.Progress > 0)
+                        {
+                            <a href="@QueryHelpers.AddQueryString("/lessons/" + i, continueArgs)" class="btn btn-primary m-1">Continue</a>
+
+                            var restartArgs = new Dictionary<string, string>()
+                            {
+                                { "type", "standardLesson" },
+                                { "reset", "true" },
+                            };
+                            <a href="@QueryHelpers.AddQueryString("/lessons/" + i, restartArgs)" class="btn btn-primary m-1">Restart</a>
+                        }
+                        else
+                        {
+                            <a href="@QueryHelpers.AddQueryString("/lessons/" + i, continueArgs)" class="btn btn-primary m-1">Start</a>
+                        }
+                    }
+                </div>
             </div>
-            <div class="card-footer text-center">
-                <a href="@unit.Route" class="btn btn-primary m-1">Start</a>
-            </div>
-        </div>
+            i++;
+        }
     }
 </div>
 

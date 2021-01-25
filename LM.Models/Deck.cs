@@ -25,7 +25,7 @@ namespace LM.Models
 
         public Deck() { }
 
-        public Deck(int id, string name, List<string> cardNames)
+        public Deck(int id, string name, List<string> cardNames, bool practiceLesson)
         {
             Id = id;
             Name = name;
@@ -36,22 +36,36 @@ namespace LM.Models
             }
             Progress = 0;
 
-            Questions = GenerateLessonQuestions(Cards, this);
+            if (practiceLesson)
+            {
+                Questions = GeneratePracticeQuestions(Cards, this);
+            }
+            else
+            {
+                Questions = GenerateLessonQuestions(Cards, this);
+            }
         }
 
-        public Deck(int id, string name, List<Card> cards)
+        public Deck(int id, string name, List<Card> cards, bool practiceLesson)
         {
             Id = id;
             Name = name;
             Cards = cards;
             Progress = 0;
 
-            Questions = GenerateLessonQuestions(Cards, this);
+            if (practiceLesson)
+            {
+                Questions = GeneratePracticeQuestions(Cards, this);
+            }
+            else
+            {
+                Questions = GenerateLessonQuestions(Cards, this);
+            }
         }
 
         public static Deck DeckFromSet(int id)
         {
-            return new Deck(0, "", CardDB.CardsFromSet(id));
+            return new Deck(0, "", CardDB.CardsFromSet(id), false);
         }
 
         public void ShuffleDeck()

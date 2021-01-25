@@ -25,10 +25,15 @@ namespace LM.Web.Pages
         public int LessonId { get; set; }
 
         public string LessonName { get; set; }
-        public bool CustomLesson { get; set; }
         public Deck LessonDeck { get; set; }
         public Question CurrentQuestion { get; set; }
         public int QuestionIndex { get; set; }
+
+        private List<Deck> UserDecks { get; set; }
+        
+        private enum LessonType { StandardLesson, CustomLesson, StandardPractice, CustomPractice };
+
+        private LessonType Type { get; set; }
 
         private string UserName { get; set; }
 
@@ -40,13 +45,13 @@ namespace LM.Web.Pages
         [CascadingParameter]
         public Task<AuthenticationState> AuthState { get; set; }
 
-        private static Action NextQuestionAction { get; set; }
+        private static Action<bool> NextQuestionAction { get; set; }
         private static Action UpdateStateAction { get; set; }
 
         [JSInvokable]
         public static void NextQuestionCaller()
         {
-            NextQuestionAction.Invoke();
+            NextQuestionAction.Invoke(true);
         }
 
         [JSInvokable]
@@ -58,28 +63,39 @@ namespace LM.Web.Pages
         protected override void OnInitialized()
         {
             var uri = NM.ToAbsoluteUri(NM.Uri);
-
             var queryStrings = QueryHelpers.ParseQuery(uri.Query);
-            if (queryStrings.TryGetValue("custom", out var isCustom))
-            {
-                if (isCustom.Equals("true")) CustomLesson = true;
-                else CustomLesson = false;
-            }
 
+            GetLessonType(queryStrings);
             GetUserInfo();
+            LoadLessonDeck();
 
-            if (CustomLesson)
-            {
-                LoadCustomLessonDeck();
-            }
-            else
-            {
-                LoadStandardLessonDeck();
-            }
+            queryStrings.TryGetValue("reset", out var reset);
+            if (reset.Equals("true")) LessonDeck.Progress = 0;
+
             NextQuestionAction = NextQuestion;
             UpdateStateAction = UpdateState;
 
             base.OnInitialized();
+        }
+
+        private void GetLessonType(Dictionary<string, Microsoft.Extensions.Primitives.StringValues> queryStrings)
+        {
+            queryStrings.TryGetValue("type", out var lessonType);
+            switch (lessonType)
+            {
+                case "standardLesson":
+                    Type = LessonType.StandardLesson;
+                    break;
+                case "customLesson":
+                    Type = LessonType.CustomLesson;
+                    break;
+                case "standardPractice":
+                    Type = LessonType.StandardPractice;
+                    break;
+                case "customPractice":
+                    Type = LessonType.CustomPractice;
+                    break;
+            }
         }
 
         private async void GetUserInfo()
@@ -99,25 +115,28 @@ namespace LM.Web.Pages
         {
             if (firstRender)
             {
-                NextQuestion();
+                NextQuestion(false);
             }
             return base.OnAfterRenderAsync(firstRender);
         }
 
-        private void LoadStandardLessonDeck()
-        {
-            LessonDeck = new Deck(0, "Unit " + LessonId, CardDB.CardsFromSet(LessonId));
-        }
-
-        private void LoadCustomLessonDeck()
+        private void LoadLessonDeck()
         {
             Connection.Open();
 
-            SqlCommand sqlcmd = new SqlCommand(@"select DeckList from dbo.AspNetUsers where UserName = @UserName", Connection);
+            SqlCommand sqlcmd = null;
+            switch (Type)
+            {
+                case LessonType.StandardLesson:
+                    sqlcmd = new SqlCommand(@"select UnitLessons from dbo.AspNetUsers where UserName = @UserName", Connection);
+                    break;
+                case LessonType.CustomLesson:
+                    sqlcmd = new SqlCommand(@"select CustomLessons from dbo.AspNetUsers where UserName = @UserName", Connection);
+                    break;
+            }
             sqlcmd.Parameters.AddWithValue("@UserName", UserName);
-            SqlDataReader rdr = sqlcmd.ExecuteReader();
 
-            List<Deck> UserDecks = null;
+            SqlDataReader rdr = sqlcmd.ExecuteReader();
             if (rdr.Read())
             {
                 XmlSerializer xsr = new XmlSerializer(typeof(List<Deck>));
@@ -125,13 +144,21 @@ namespace LM.Web.Pages
                 UserDecks = (List<Deck>)xsr.Deserialize(xmlrdr);
             }
 
-            foreach (Deck deck in UserDecks)
+            switch (Type)
             {
-                if (deck.Id == LessonId)
-                {
-                    LessonDeck = deck;
+                case LessonType.StandardLesson:
+                    LessonDeck = UserDecks[LessonId - 1];
                     break;
-                }
+                case LessonType.CustomLesson:
+                    foreach (Deck deck in UserDecks)
+                    {
+                        if (deck.Id == LessonId)
+                        {
+                            LessonDeck = deck;
+                            break;
+                        }
+                    }
+                    break;
             }
 
             rdr.Close();
@@ -139,19 +166,28 @@ namespace LM.Web.Pages
             Connection.Close();
         }
 
-        private void SaveCustomLessonDeck()
+        private void SaveLessonDeck()
         {
             XmlSerializer xsr = new XmlSerializer(typeof(List<Deck>));
             StringWriter stwrtr = new StringWriter();
             XmlWriter xmlwrtr = XmlWriter.Create(stwrtr);
-            xsr.Serialize(xmlwrtr, LessonDeck);
+            xsr.Serialize(xmlwrtr, UserDecks);
 
-            string UserDeckXML = stwrtr.ToString();
+            string UserDecksXML = stwrtr.ToString();
 
             Connection.Open();
 
-            SqlCommand sqlcmd = new SqlCommand("update dbo.AspNetUsers set DeckList = @DeckList where UserName = @UserName", Connection);
-            sqlcmd.Parameters.AddWithValue("@DeckList", UserDeckXML);
+            SqlCommand sqlcmd = null;
+            switch (Type)
+            {
+                case LessonType.StandardLesson:
+                    sqlcmd = new SqlCommand("update dbo.AspNetUsers set UnitLessons = @DeckList where UserName = @UserName", Connection);
+                    break;
+                case LessonType.CustomLesson:
+                    sqlcmd = new SqlCommand("update dbo.AspNetUsers set CustomLessons = @DeckList where UserName = @UserName", Connection);
+                    break;
+            }
+            sqlcmd.Parameters.AddWithValue("@DeckList", UserDecksXML);
             sqlcmd.Parameters.AddWithValue("@UserName", UserName);
 
             sqlcmd.ExecuteNonQuery();
@@ -165,13 +201,22 @@ namespace LM.Web.Pages
             StateHasChanged();
         }
 
-        public async void NextQuestion()
+        public async void NextQuestion(bool calledNext)
         {
-            QuestionIndex++;
+            if (calledNext)
+            {
+                if (Type == LessonType.StandardLesson || Type == LessonType.CustomLesson)
+                {
+                    LessonDeck.Progress++;
+                    SaveLessonDeck();
+                }
+            }
+
+            QuestionIndex = LessonDeck.Progress;
 
             if (QuestionIndex < LessonDeck.Questions.Count)
             {
-                CurrentQuestion = LessonDeck.Questions[QuestionIndex - 1];
+                CurrentQuestion = LessonDeck.Questions[QuestionIndex];
 
                 switch (CurrentQuestion.Type)
                 {
@@ -186,12 +231,10 @@ namespace LM.Web.Pages
                         await JSR.InvokeVoidAsync("SetupIntroQuestion", CurrentQuestion.GetFaceImage(), CurrentQuestion.GetBackImage());
                         break;
                 }
-
-                SaveCustomLessonDeck();
             }
             else
             {
-                // do something...
+                // reroute to page we came from
             }
         }
     }

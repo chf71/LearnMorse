@@ -1,12 +1,18 @@
 ﻿@page "/practice" 
 
-<h3>Practice</h3>
+<h3>Recommended practice</h3>
 
-This where recommended practice will go
+...
 
-<br />
+<AuthorizeView>
+    <Authorized>
+        <h3>@context.User.Identity.Name's practice decks</h3>
 
-Also, let user know that they can create their own practice decks by going to Custom Lessons and checking "just for practice" while making deck
+        <h4>Standard decks</h4>
+
+        <h4>Custom decks</h4>
+    </Authorized>
+</AuthorizeView>
 
 @code {
 

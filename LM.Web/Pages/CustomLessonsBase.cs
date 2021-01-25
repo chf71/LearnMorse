@@ -133,7 +133,7 @@ namespace LM.Web.Pages
                 DeckName = "Custom Deck " + newId;
             }
 
-            Deck deck = new Deck(newId, DeckName, CustomDeck);
+            Deck deck = new Deck(newId, DeckName, CustomDeck, false);
 
             UserDecks.Add(deck);
 
