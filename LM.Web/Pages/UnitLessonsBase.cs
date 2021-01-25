@@ -1,12 +1,11 @@
 ﻿using LM.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using System;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -21,6 +20,9 @@ namespace LM.Web.Pages
 
         [CascadingParameter]
         public Task<AuthenticationState> AuthState { get; set; }
+
+        [Inject]
+        private NavigationManager NM { get; set; }
 
         protected async override Task OnInitializedAsync()
         {
@@ -71,6 +73,16 @@ namespace LM.Web.Pages
                 sqlcmd.Dispose();
                 connection.Close();
             }
+        }
+
+        public void DoLesson(Deck unit)
+        {
+            var queryArgs = new Dictionary<string, string>
+            {
+                { "type", "standardLesson" },
+            };
+
+            NM.NavigateTo(QueryHelpers.AddQueryString("/lessons/" + (UnitDecks.IndexOf(unit) + 1), queryArgs));
         }
     }
 }

@@ -187,3 +187,8 @@ app {
     color: white;
     border: 1px solid black;
 }
+
+.scalecard:hover {
+    transform: scale(1.025);
+    cursor: pointer;
+}

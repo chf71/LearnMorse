@@ -1,65 +1,61 @@
 ﻿@page "/lessons"
 @inherits UnitLessonsBase
 @using Microsoft.AspNetCore.WebUtilities
+@using LM.Models 
 
-<div class="d-flex flex-row flex-wrap justify-content-around">
+<div class="d-flex flex-row flex-wrap justify-content-between">
     @{
         int i = 1;
-        foreach (var unit in UnitDecks)
+        foreach (Deck unit in UnitDecks)
         {
             int up = unit.Progress;
             int upp = (int)Math.Floor(Convert.ToDouble(unit.Progress) / Convert.ToDouble(unit.Questions.Count) * 100.0);
 
-            <div class="card m-3" style="max-width: 230px; min-width: 230px;">
-                <div class="card-header progress p-0" style="min-height: 25px;">
-                        <div class="progress-bar" role="progressbar" style="width: @upp%;"
-                             aria-valuenow="@upp" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="card m-3 scalecard shadow" style="max-width: 230px; min-width: 230px;" @onclick="() => { DoLesson(unit); }">
+                <div class="card-header progress p-0 border-0" style="min-height: 25px;">
+                    @{
+                        if (unit.Finished)
+                        {
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"
+                                 aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        }
+                        else
+                        {
+                            <div class="progress-bar" role="progressbar" style="width: @upp%;"
+                                 aria-valuenow="@upp" aria-valuemin="0" aria-valuemax="100"></div>
+                        }
+                    }
                 </div>
                 <div class="card-img-top text-center">
                     <img class="card-img" src="/images/unit@(i).png" style="max-width: 175px; max-height: 200px;" />
                 </div>
-                    <div class="card-footer text-center">
-                        @{
-                            var continueArgs = new Dictionary<string, string>
+                <div class="card-footer text-center border-0" style="min-height: 70px;">
+                    @{
+                        if (unit.Progress > 0)
+                        {
+                            var restartArgs = new Dictionary<string, string>
                             {
                                 { "type", "standardLesson" },
+                                { "reset", "true" },
                             };
-
-                            if (unit.Progress > 0)
-                            {
-                                if (unit.Progress != unit.Questions.Count)
-                                {
-                                    <a href="@QueryHelpers.AddQueryString("/lessons/" + i, continueArgs)" class="btn btn-primary m-1">Continue</a>
-                                }
-
-                                var restartArgs = new Dictionary<string, string>
-                                {
-                                    { "type", "standardLesson" },
-                                    { "reset", "true" },
-                                };
-                                <a href="@QueryHelpers.AddQueryString("/lessons/" + i, restartArgs)" class="btn btn-primary m-1">Restart</a>
-                            }
-                            else
-                            {
-                                <a href="@QueryHelpers.AddQueryString("/lessons/" + i, continueArgs)" class="btn btn-primary m-1">Start</a>
-                            }
-
-                            if (unit.Finished)
-                            {
-                                var practiceArgs = new Dictionary<string, string>
-                                {
-                                    { "type", "standardPractice" },
-                                };
-                                <br />
-                                <a href="@QueryHelpers.AddQueryString("/lessons/" + i, practiceArgs)" class="btn btn-primary m-1">Practice</a>
-                            }
-
-
+                            <a href="@QueryHelpers.AddQueryString("/lessons/" + i, restartArgs)" class="btn btn-primary m-1">Restart</a>
                         }
-                    </div>
+
+                        if (unit.Finished)
+                        {
+                            var practiceArgs = new Dictionary<string, string>
+                            {
+                                { "type", "standardPractice" },
+                            };
+                            <a href="@QueryHelpers.AddQueryString("/lessons/" + i, practiceArgs)" class="btn btn-primary m-1">Practice</a>
+                        }
+
+
+                    }
                 </div>
-                i++;
-            }
+            </div>
+            i++;
+        }
     }
 </div>
 

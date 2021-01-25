@@ -251,6 +251,19 @@ namespace LM.Web.Pages
             else
             {
                 LessonDeck.Finished = true;
+                switch (Type)
+                {
+                    case LessonType.StandardLesson:
+                        NM.NavigateTo("/lessons");
+                        break;
+                    case LessonType.StandardPractice:
+                    case LessonType.CustomPractice:
+                        NM.NavigateTo("/practice");
+                        break;
+                    case LessonType.CustomLesson:
+                        NM.NavigateTo("/custom");
+                        break;
+                }
             }
         }
     }
